@@ -1,0 +1,43 @@
+# D.O Fades — recordatorios web
+
+Este paquete agrega a la agenda: resumen de mañana a las 8:00 p. m. (America/Bogota), aviso 30 minutos antes de cada cita y aviso a la hora exacta. Los envíos se ejecutan en Netlify cada minuto y usan Firebase Cloud Messaging.
+
+## Importante
+- No se puede activar solo con el HTML: requiere Firebase y Netlify Functions.
+- No pegues ni envíes la clave privada de Firebase por WhatsApp ni en el chat. Guárdala únicamente como variable privada en Netlify.
+- El aviso en Chrome cerrado requiere permiso concedido, conexión a internet y que Android/Chrome no haya bloqueado las notificaciones.
+- El resumen de las 8 p. m. solo se envía si hay citas registradas para el día siguiente.
+
+## A. Crear Firebase
+1. Entra a https://console.firebase.google.com/ y crea un proyecto llamado `DO-Fades-Recordatorios`.
+2. En el proyecto, agrega una aplicación Web (icono `</>`). Copia la configuración que Firebase muestra.
+3. En Authentication → Sign-in method, activa **Anonymous**.
+4. En Firestore Database, crea una base de datos. En Rules, publica el contenido de `firestore.rules` de este paquete.
+5. En Project settings → Cloud Messaging, crea/consulta la configuración Web Push y genera una **Web Push certificate key pair (VAPID)**. Copia la clave pública.
+6. En Project settings → Service accounts, genera una clave privada para el Admin SDK y descarga el JSON. No la compartas.
+
+## B. Completar configuración pública
+Edita `public/firebase-config.js` y reemplaza los campos `REEMPLAZAR...` por los valores de la app Web y la clave pública VAPID.
+Edita también `public/firebase-messaging-sw.js` y reemplaza los campos Firebase por los mismos valores. No pongas la clave privada del Admin SDK en estos archivos.
+
+## C. Configurar Netlify
+1. Sube este proyecto a un repositorio privado de GitHub (incluye `public`, `netlify`, `netlify.toml` y `package.json`).
+2. En Netlify, importa ese repositorio y configúralo para publicar el sitio. Puedes conectar el repositorio a tu sitio existente si Netlify ofrece esa opción; confirma que el nombre de sitio siga siendo `curious-moxie-773364`.
+3. En Site configuration → Environment variables, agrega:
+   - `FIREBASE_SERVICE_ACCOUNT`: pega el JSON completo de la cuenta de servicio en una sola variable.
+   - `SITE_URL`: `https://curious-moxie-773364.netlify.app`
+4. Vuelve a desplegar el sitio. Netlify instalará `firebase-admin` desde `package.json` y publicará las funciones.
+
+## D. Activar en el celular
+1. Abre `https://curious-moxie-773364.netlify.app` en Chrome Android.
+2. Entra a la agenda y pulsa **Activar notificaciones**.
+3. Acepta el permiso de notificaciones.
+4. Mantén el teléfono con conexión a internet. Haz una cita de prueba y comprueba que aparezca en la agenda antes de esperar los avisos.
+
+## Notas técnicas
+- Zona horaria: `America/Bogota` (UTC-5).
+- La función `reminders` se ejecuta cada minuto en Netlify.
+- `sync-appointments` copia las citas de la agenda local a Firestore; los cambios y eliminaciones posteriores se sincronizan al guardar.
+- Los fiados siguen siendo locales y no se envían a Firebase.
+- Si la agenda se abre en otro navegador/dispositivo, cada dispositivo debe activar notificaciones; la cuenta anónima identifica cada instalación del navegador.
+- Este paquete no puede conservar datos que estén en otro dominio/navegador. Antes de reemplazar la publicación, conserva la versión anterior y haz una copia de tus citas.
