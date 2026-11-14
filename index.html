@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101010">
+<link rel="icon" href="./icon-192.png">
+<title>D.O Fades | Agenda</title>
+<style>
+:root{--bg:#101010;--panel:#1b1b1b;--gold:#d5ad57;--muted:#aaa;--green:#1d8b55}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f5f5f5;font:15px Arial,sans-serif}
+header{padding:22px 16px;text-align:center;background:#080808;border-bottom:1px solid #6e572b;position:relative}
+header h1{margin:0;color:var(--gold);letter-spacing:3px}header p{margin:7px 0 0;color:#bbb}
+.debt-open{position:absolute;right:16px;top:50%;transform:translateY(-50%);margin:0;background:#a92f36;color:#fff;border:1px solid #e05b62;font-size:15px;padding:13px 17px;border-radius:10px;box-shadow:0 3px 12px rgba(169,47,54,.28)}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:20;display:none;align-items:center;justify-content:center;padding:14px}
+.modal-backdrop.show{display:flex}
+.debt-modal{width:min(560px,100%);max-height:90vh;overflow:auto;background:#1b1b1b;border:1px solid #806432;border-radius:15px;padding:17px;box-shadow:0 15px 50px #000}
+.debt-modal-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.debt-modal-head h2{margin:0 0 12px;color:var(--gold)}
+.debt-total{background:#111;border:1px solid #4a3a1d;border-radius:9px;padding:11px;margin:12px 0;color:#ccc}
+.debt-total strong{color:#f1cd7a;font-size:20px}
+.debt-item{background:#111;border:1px solid #393939;border-radius:9px;padding:11px;margin:9px 0}
+.debt-item-name{font-weight:bold;font-size:16px}
+.debt-item-amount{color:#f1cd7a;font-weight:bold;font-size:18px;margin:4px 0}
+.debt-item-date{font-size:13px;color:#d0c4a7;line-height:1.6;margin-top:5px}.debt-item-date strong{color:#f1d18a;font-weight:700}
+.debt-item button{margin-top:8px}
+.modal-close{background:#393939;color:white}
+main{max-width:1200px;margin:auto;padding:16px;display:grid;gap:16px}
+.panel{background:var(--panel);border:1px solid #34302a;border-radius:14px;padding:16px}
+h2{margin:0 0 14px;color:var(--gold);font-size:18px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;color:#ccc;font-size:13px;margin-bottom:5px}
+input,select,textarea{width:100%;padding:12px;border-radius:8px;border:1px solid #454545;background:#101010;color:white;font-size:15px}
+textarea{min-height:70px;resize:vertical}.wide{grid-column:1/-1}
+button{border:0;border-radius:8px;padding:11px 13px;background:var(--gold);color:#17120a;font-weight:bold;cursor:pointer;margin:4px 3px 4px 0}
+button.secondary{background:#393939;color:white}button.danger{background:#8c3333;color:white}button.green{background:var(--green);color:white}
+.actions{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#111;padding:12px;border-radius:9px;text-align:center}.stat b{display:block;color:var(--gold);font-size:21px}
+.appointment{padding:13px;margin:10px 0;background:#111;border:1px solid #393939;border-radius:10px}
+.appointment.done{border:2px solid #26a66b;background:#10251b}
+.meta{color:#bbb;font-size:13px;line-height:1.6}.name{font-weight:bold;font-size:17px}
+.status{color:#69d59c;font-weight:bold;margin-top:6px}.pending{color:#f1c66e;font-weight:bold}
+.empty{color:#aaa;text-align:center;padding:18px}
+.week-toolbar{display:flex;align-items:end;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.week-nav{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.week-nav button{margin:0}
+.week-label{color:#f1d18a;font-weight:bold;font-size:14px;padding:8px 4px}
+.week-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:9px;align-items:start}
+.day-column{min-width:0;background:#121212;border:1px solid #3b3428;border-radius:11px;padding:9px;min-height:150px}
+.day-column.today{border:2px solid var(--gold);background:#1b1811}
+.day-heading{padding:3px 2px 9px;margin-bottom:8px;border-bottom:1px solid #4b402d}
+.day-name{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--gold);font-weight:bold}
+.day-date{font-size:17px;font-weight:bold;margin-top:4px}
+.day-empty{color:#777;font-size:12px;text-align:center;padding:13px 2px}
+.appointment{padding:10px;margin:8px 0;background:#1d1d1d;border:1px solid #414141;border-radius:9px}
+.appointment.done{border:2px solid #26a66b;background:#10251b}
+.appointment-time{font-size:21px;line-height:1.15;font-weight:800;color:#f3cd79;margin-bottom:5px;letter-spacing:.3px}
+.appointment-client{font-size:14px;font-weight:bold;line-height:1.3;margin-bottom:6px;overflow-wrap:anywhere}
+.appointment .meta{font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.appointment .actions{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.appointment .actions button{font-size:11px;padding:8px 4px;margin:0}
+@media(max-width:700px){header{padding:18px 130px 18px 10px}header h1{font-size:19px;letter-spacing:1.5px}header p{font-size:12px}.debt-open{right:8px;font-size:13px;padding:11px 12px}}
+@media(max-width:1000px){.week-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.wide{grid-column:auto}.stats{grid-template-columns:1fr 1fr 1fr}main{padding:10px}.panel{padding:13px}.week-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.day-column{padding:7px}.appointment-time{font-size:20px}.appointment .actions{grid-template-columns:1fr 1fr}}
+@media(max-width:350px){.week-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><h1>✂ D.O FADES ✂</h1><p>Agenda y control de citas</p><button type="button" class="debt-open" id="openDebt">Cortes fiados</button></header>
+<div class="modal-backdrop" id="debtModal" aria-hidden="true">
+ <section class="debt-modal" role="dialog" aria-modal="true" aria-labelledby="debtTitle">
+  <div class="debt-modal-head">
+   <h2 id="debtTitle">Cortes fiados</h2>
+   <button type="button" class="modal-close" id="closeDebt">Cerrar ✕</button>
+  </div>
+  <form id="debtForm">
+   <div class="grid">
+    <div><label for="debtName">Nombre de la persona</label><input id="debtName" required placeholder="Nombre del cliente"></div>
+    <div><label for="debtAmount">Valor pendiente (COP)</label><input id="debtAmount" type="text" inputmode="numeric" autocomplete="off" required placeholder="$ 18.000"></div>
+   </div>
+   <div class="actions"><button type="submit">Guardar fiado</button></div>
+  </form>
+  <div class="debt-total">Total pendiente: <strong id="debtTotal">$0</strong></div>
+  <div id="debtList"></div>
+ </section>
+</div>
+
+<main>
+<section class="panel">
+<h2>Resumen del día</h2>
+<div class="stats"><div class="stat"><b id="count">0</b>Citas</div><div class="stat"><b id="done">0</b>Terminadas</div><div class="stat"><b id="total">$0</b>Total recibido</div></div>
+</section>
+<section class="panel" id="reminderPanel">
+<h2>Recordatorios de D.O Fades</h2>
+<p class="meta">Resumen diario a las 8:00 p. m.; aviso 30 minutos antes y a la hora exacta de cada cita.</p>
+<button type="button" id="enableReminders">Activar notificaciones</button>
+<span id="reminderStatus" class="meta" aria-live="polite">Notificaciones sin configurar.</span>
+</section>
+<section class="panel">
+<h2 id="formTitle">Registrar cita</h2>
+<form id="booking">
+<div class="grid">
+<div><label>Nombre del cliente</label><input id="client" required placeholder="Nombre completo"></div>
+<div><label>Teléfono</label><input id="phone" inputmode="tel" placeholder="Número de contacto"></div>
+<div><label>Fecha</label><input id="date" type="date" required></div>
+<div><label>Hora</label><input id="time" type="time" required></div>
+<div><label>Servicio</label><select id="service"><option>Corte</option><option>Barba</option><option>Corte + barba</option><option ce> cejas / diseño</option><option>Otro</option></select></div>
+<div><label>Valor</label><select id="price"><option value="5000">$5.000</option><option value="10000">$10.000</option><option value="16000">$16.000</option><option value="18000">$18.000</option><option value="20000">$20.000</option></select></div>
+<div><label>Forma de pago</label><select id="payment"><option>Pendiente / fiado</option><option>Nequi</option><option>Efectivo</option></select></div>
+<div><label>Estado de la cita</label><select id="status"><option>Pendiente</option><option>Confirmada</option></select></div>
+<div class="wide"><label>Notas adicionales</label><textarea id="notes" placeholder="Detalles del servicio o del cliente..."></textarea></div>
+</div>
+<div class="actions"><button type="submit" id="saveBtn">Guardar cita</button><button type="button" class="secondary" id="cancelEdit" hidden>Cancelar edición</button></div>
+</form>
+</section>
+<section class="panel">
+<h2>Agenda semanal</h2>
+<div class="week-toolbar">
+  <div>
+    <label>Seleccionar una fecha para ver su semana</label>
+    <input id="filterDate" type="date">
+  </div>
+  <div class="week-nav">
+    <button type="button" class="secondary" id="prevWeek">‹ Semana anterior</button>
+    <span class="week-label" id="weekLabel"></span>
+    <button type="button" class="secondary" id="nextWeek">Semana siguiente ›</button>
+    <button type="button" id="thisWeek">Hoy</button>
+  </div>
+</div>
+<div class="week-grid" id="appointments"></div>
+</section>
+</main>
+
+<script>
+/* Efectos de sonido locales: no necesita internet ni archivos externos. */
+let audioCtx;
+function audio(){
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if(!AC) return null;
+  if(!audioCtx) audioCtx = new AC();
+  if(audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+function tone(freq, start, duration, type="sine", volume=0.08, endFreq=null){
+  const ctx=audio(); if(!ctx) return;
+  const osc=ctx.createOscillator(), gain=ctx.createGain();
+  osc.type=type; osc.frequency.setValueAtTime(freq,ctx.currentTime+start);
+  if(endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq,ctx.currentTime+start+duration);
+  gain.gain.setValueAtTime(0.0001,ctx.currentTime+start);
+  gain.gain.exponentialRampToValueAtTime(volume,ctx.currentTime+start+0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+start+duration);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(ctx.currentTime+start); osc.stop(ctx.currentTime+start+duration+0.02);
+}
+function noiseTap(start=0,duration=0.045,volume=0.025){
+  const ctx=audio(); if(!ctx) return;
+  const size=Math.max(1,Math.floor(ctx.sampleRate*duration));
+  const buffer=ctx.createBuffer(1,size,ctx.sampleRate), data=buffer.getChannelData(0);
+  for(let i=0;i<size;i++) data[i]=(Math.random()*2-1)*(1-i/size);
+  const src=ctx.createBufferSource(), gain=ctx.createGain();
+  src.buffer=buffer; gain.gain.setValueAtTime(volume,ctx.currentTime+start);
+  gain.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+start+duration);
+  src.connect(gain); gain.connect(ctx.destination);
+  src.start(ctx.currentTime+start); src.stop(ctx.currentTime+start+duration);
+}
+function playSound(kind="tap"){
+  if(kind==="save"){
+    tone(660,0,0.10,"sine",0.07); tone(880,0.09,0.15,"sine",0.075);
+  } else if(kind==="edit"){
+    noiseTap(0,0.035,0.035); tone(1050,0.025,0.07,"triangle",0.035);
+  } else if(kind==="delete"){
+    tone(520,0,0.09,"triangle",0.06,330); tone(280,0.08,0.13,"sine",0.045,170);
+  } else if(kind==="cash"){
+    // Dos tonos tipo caja registradora/moneda, seguidos de confirmación.
+    tone(1250,0,0.12,"triangle",0.07); tone(1650,0.08,0.16,"triangle",0.065);
+    tone(784,0.31,0.12,"sine",0.065); tone(1046,0.43,0.20,"sine",0.07);
+  } else {
+    tone(740,0,0.055,"sine",0.035);
+  }
+}
+</script>
+
+<script>
+const $=id=>document.getElementById(id);
+const key='doFadesAppointments';
+function loadArray(storageKey){
+ try{
+  const value=JSON.parse(localStorage.getItem(storageKey)||'[]');
+  return Array.isArray(value)?value:[];
+ }catch(error){return []}
+}
+let appointments=loadArray(key), editing=null;
+const today=()=>{
+ const d=new Date();
+ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+$('date').value=today();$('filterDate').value=today();
+const money=n=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(n);
+function save(){localStorage.setItem(key,JSON.stringify(appointments));render();if(window.syncDofadesAppointments)window.syncDofadesAppointments(appointments)}
+function reset(){editing=null;$('booking').reset();$('date').value=$('filterDate').value||today();$('formTitle').textContent='Registrar cita';$('saveBtn').textContent='Guardar cita';$('cancelEdit').hidden=true}
+$('booking').addEventListener('submit',e=>{
+ e.preventDefault();
+ const item={id:editing??Date.now(),client:$('client').value.trim(),phone:$('phone').value.trim(),date:$('date').value,time:$('time').value,service:$('service').value,price:Number($('price').value),payment:$('payment').value,status:$('status').value,notes:$('notes').value.trim()};
+ const clash=appointments.some(a=>a.id!==item.id&&a.date===item.date&&a.time===item.time);
+ if(clash){alert('Ya hay una cita registrada para esa fecha y hora.');return}
+ if(editing!==null){appointments=appointments.map(a=>a.id===editing?item:a)}else appointments.push(item);
+ save();playSound('save');reset();
+});
+$('cancelEdit').onclick=()=>{playSound('tap');reset()};
+$('filterDate').onchange=()=>{playSound('tap');render()};
+function edit(id){playSound('edit');const a=appointments.find(x=>x.id===id);if(!a)return;editing=id;
+ ['client','phone','date','time','service','price','payment','status','notes'].forEach(k=>$(k).value=a[k]??'');
+ $('formTitle').textContent='Editar cita';$('saveBtn').textContent='Guardar cambios';$('cancelEdit').hidden=false;window.scrollTo({top:0,behavior:'smooth'})}
+function remove(id){if(confirm('¿Eliminar esta cita?')){playSound('delete');appointments=appointments.filter(a=>a.id!==id);save()}}
+function setPayment(id,payment){if(payment==='Nequi'||payment==='Efectivo'){playSound('cash')}else{playSound('tap')}appointments=appointments.map(a=>a.id===id?{...a,payment,status:payment==='Pendiente / fiado'?'Pendiente':'Atención terminada'}:a);save()}
+function parseLocalDate(value){
+ const [y,m,d]=value.split('-').map(Number);
+ return new Date(y,m-1,d,12,0,0);
+}
+function dateKey(date){
+ const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,'0'),d=String(date.getDate()).padStart(2,'0');
+ return `${y}-${m}-${d}`;
+}
+function render(){
+ const selected=parseLocalDate($('filterDate').value||today());
+ const monday=new Date(selected);
+ monday.setDate(selected.getDate()-((selected.getDay()+6)%7));
+ const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
+ const weekDates=[];
+ for(let i=0;i<7;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);weekDates.push(d)}
+ const firstLabel=monday.toLocaleDateString('es-CO',{day:'numeric',month:'short'});
+ const lastLabel=sunday.toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'});
+ $('weekLabel').textContent=`${firstLabel} – ${lastLabel}`;
+ const weekKeys=weekDates.map(dateKey);
+ const list=appointments.filter(a=>weekKeys.includes(a.date)).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+ $('count').textContent=list.length;
+ $('done').textContent=list.filter(a=>a.payment==='Nequi'||a.payment==='Efectivo').length;
+ $('total').textContent=money(list.filter(a=>a.payment==='Nequi'||a.payment==='Efectivo').reduce((s,a)=>s+a.price,0));
+ const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const grid=$('appointments');grid.innerHTML='';
+ const weekdays=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+ weekDates.forEach((date,index)=>{
+  const key=weekKeys[index];
+  const dayAppointments=list.filter(a=>a.date===key).sort((a,b)=>a.time.localeCompare(b.time));
+  const col=document.createElement('section');
+  col.className='day-column'+(key===today()?' today':'');
+  const heading=document.createElement('div');heading.className='day-heading';
+  heading.innerHTML=`<div class="day-name">${weekdays[index]}</div><div class="day-date">${date.toLocaleDateString('es-CO',{day:'2-digit',month:'short'})}</div>`;
+  col.appendChild(heading);
+  if(!dayAppointments.length){
+   const empty=document.createElement('div');empty.className='day-empty';empty.textContent='Sin citas';col.appendChild(empty);
+  }
+  dayAppointments.forEach(a=>{
+   const done=a.payment==='Nequi'||a.payment==='Efectivo';
+   const el=document.createElement('article');el.className='appointment'+(done?' done':'');
+   el.innerHTML=`<div class="appointment-time">${safe(a.time)}</div><div class="appointment-client">${safe(a.client)}</div><div class="meta">${safe(a.phone)}<br>${safe(a.service)} · ${money(a.price)}<br>Pago: ${safe(a.payment)}<br>Estado: ${safe(a.status)}${a.notes?'<br>Notas: '+safe(a.notes):''}</div><div class="${done?'status':'pending'}">${done?'✓ Atención terminada':'Pago pendiente'}</div><div class="actions"><button class="green" data-pay="Nequi">Nequi</button><button class="green" data-pay="Efectivo">Efectivo</button><button class="secondary" data-pay="Pendiente / fiado">Fiado</button><button class="secondary" data-edit>Editar</button><button class="danger" data-delete>Eliminar</button></div>`;
+   el.querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>setPayment(a.id,b.dataset.pay));
+   el.querySelector('[data-edit]').onclick=()=>edit(a.id);
+   el.querySelector('[data-delete]').onclick=()=>remove(a.id);
+   col.appendChild(el);
+  });
+  grid.appendChild(col);
+ });
+}
+function shiftWeek(amount){
+ const d=parseLocalDate($('filterDate').value||today());
+ d.setDate(d.getDate()+amount*7);
+ $('filterDate').value=dateKey(d);playSound('tap');render();
+}
+$('prevWeek').onclick=()=>shiftWeek(-1);
+$('nextWeek').onclick=()=>shiftWeek(1);
+$('thisWeek').onclick=()=>{$('filterDate').value=today();playSound('tap');render()};
+
+
+// Registro independiente de cortes fiados: conserva fecha y hora exactas de creación.
+const debtKey='doFadesDebts';
+let debts=loadArray(debtKey).map(d=>({
+ ...d,
+ createdAt:d.createdAt||new Date().toISOString(),
+ amount:Number(d.amount)||0,
+ name:String(d.name||'')
+}));
+function parseCopAmount(value){
+ const digits=String(value||'').replace(/\D/g,'');
+ return digits?Number(digits):0;
+}
+function formatCopInput(value){
+ const amount=parseCopAmount(value);
+ return amount?('$ '+amount.toLocaleString('es-CO')):'';
+}
+$('debtAmount').addEventListener('input',e=>{
+ // Mantener lo que se está escribiendo sin mover el cursor.
+ e.target.value=e.target.value.replace(/[^0-9]/g,'');
+});
+$('debtAmount').addEventListener('blur',e=>{
+ const amount=parseCopAmount(e.target.value);
+ e.target.value=amount?('$ '+amount.toLocaleString('es-CO')):'';
+});
+function saveDebts(){
+ localStorage.setItem(debtKey,JSON.stringify(debts));
+ renderDebts();
+}
+function formatDebtDate(value){
+ const d=new Date(value||Date.now());
+ return d.toLocaleDateString('es-CO',{weekday:'short',day:'2-digit',month:'short',year:'numeric'})+
+ ' · '+d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+}
+function renderDebts(){
+ const list=$('debtList');list.innerHTML='';
+ $('debtTotal').textContent=money(debts.reduce((sum,d)=>sum+Number(d.amount||0),0));
+ if(!debts.length){
+  list.innerHTML='<div class="empty">No tienes cortes fiados pendientes.</div>';return;
+ }
+ debts.slice().sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).forEach(d=>{
+  const item=document.createElement('article');item.className='debt-item';
+  const safeName=String(d.name).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  item.innerHTML=`<div class="debt-item-name">${safeName}</div><div class="debt-item-amount">${money(d.amount)}</div><div class="debt-item-date">📅 Fecha y hora del fiado: <strong>${formatDebtDate(d.createdAt)}</strong></div><button type="button" class="green">Marcar como pagado ✓</button>`;
+  item.querySelector('button').onclick=()=>{
+   if(confirm(`¿Confirmas que ${d.name} ya pagó ${money(d.amount)}? Se quitará de la lista de fiados.`)){
+    playSound('cash');debts=debts.filter(x=>x.id!==d.id);saveDebts();
+   }
+  };
+  list.appendChild(item);
+ });
+}
+function openDebtModal(){
+ $('debtModal').classList.add('show');$('debtModal').setAttribute('aria-hidden','false');renderDebts();playSound('tap');
+}
+function closeDebtModal(){
+ $('debtModal').classList.remove('show');$('debtModal').setAttribute('aria-hidden','true');playSound('tap');
+}
+$('openDebt').onclick=openDebtModal;
+$('closeDebt').onclick=closeDebtModal;
+$('debtModal').addEventListener('click',e=>{if(e.target===$('debtModal'))closeDebtModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('debtModal').classList.contains('show'))closeDebtModal()});
+$('debtForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const name=$('debtName').value.trim(),amount=parseCopAmount($('debtAmount').value);
+ if(!name||!Number.isFinite(amount)||amount<1)return;
+ const createdAt=new Date().toISOString();
+ debts.push({id:Date.now()+Math.random(),name,amount,createdAt});
+ saveDebts();playSound('save');$('debtForm').reset();
+});
+renderDebts();
+
+render();
+</script>
+
+<script type="module">
+import { firebaseConfig, vapidKey } from './firebase-config.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
+import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-messaging.js';
+
+const statusEl=document.getElementById('reminderStatus');
+const enableBtn=document.getElementById('enableReminders');
+const configured=!!(firebaseConfig.apiKey && !firebaseConfig.apiKey.includes('REEMPLAZAR') && vapidKey && !vapidKey.includes('REEMPLAZAR'));
+let app,auth;
+function status(message){if(statusEl)statusEl.textContent=message;}
+async function ensureAuth(){
+ if(!configured)throw new Error('Falta completar firebase-config.js con los datos de Firebase.');
+ if(!app){app=initializeApp(firebaseConfig);auth=getAuth(app);}
+ if(auth.currentUser)return auth.currentUser;
+ return (await signInAnonymously(auth)).user;
+}
+async function postFunction(name,body){
+ const token=await auth.currentUser.getIdToken();
+ const response=await fetch('/.netlify/functions/'+name,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});
+ if(!response.ok)throw new Error('No se pudo guardar la configuración ('+response.status+').');
+ return response.json().catch(()=>({}));
+}
+window.syncDofadesAppointments=async function(list){
+ try{await ensureAuth();await postFunction('sync-appointments',{appointments:list});status('Citas sincronizadas para los recordatorios.');}
+ catch(error){console.error(error);status('Sincronización pendiente: '+error.message);}
+};
+if(enableBtn){enableBtn.addEventListener('click',async()=>{
+ enableBtn.disabled=true;status('Configurando notificaciones…');
+ try{
+  if(!('Notification' in window))throw new Error('Este navegador no admite notificaciones web.');
+  const permission=await Notification.requestPermission();
+  if(permission!=='granted')throw new Error('No se concedió permiso de notificaciones.');
+  await ensureAuth();
+  if(!(await isSupported()))throw new Error('La mensajería web no está disponible en este navegador.');
+  const registration=await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+  const messaging=getMessaging(app);
+  const token=await getToken(messaging,{vapidKey,serviceWorkerRegistration:registration});
+  if(!token)throw new Error('No se pudo generar el token de notificaciones.');
+  await postFunction('save-token',{token});
+  const appointments=JSON.parse(localStorage.getItem('doFadesAppointments')||'[]');
+  await postFunction('sync-appointments',{appointments});
+  status('Notificaciones activadas en este teléfono.');
+  enableBtn.textContent='Notificaciones activadas';
+ }catch(error){console.error(error);status(error.message||'No se pudieron activar las notificaciones.');enableBtn.disabled=false;}
+});}
+</script>
+
+</body>
+</html>
